@@ -70,8 +70,8 @@ def pcl_callback(pcl_msg):
     passthrough = cloud_filtered.make_passthrough_filter()
     filter_axis = 'z'
     passthrough.set_filter_field_name (filter_axis)
-    axis_min = 0 # TODO subject to change
-    axis_max = 3 # TODO subject to change
+    axis_min = 0.77 # TODO subject to change
+    axis_max = 1.1 # TODO subject to change
     passthrough.set_filter_limits (axis_min, axis_max)
     cloud_filtered = passthrough.filter()
 
@@ -93,7 +93,7 @@ def pcl_callback(pcl_msg):
     ec.set_MinClusterSize(20)
     ec.set_MaxClusterSize(1500)
     ec.set_SearchMethod(tree)
-    cluster_indices = ec.Extract()
+    cluster_indices = ec.Extract() # a list of each cluster
 
     print('claster detected; ', len(cluster_indices))
     # TODO: Create Cluster-Mask Point Cloud to visualize each cluster separately
@@ -145,10 +145,10 @@ def pcl_callback(pcl_msg):
     # Suggested location for where to invoke your pr2_mover() function within pcl_callback()
     # Could add some logic to determine whether or not your object detections are robust
     # before calling pr2_mover()
-    try:
-        pr2_mover(detected_objects_list)
-    except rospy.ROSInterruptException:
-        pass
+    # try:
+    #     pr2_mover(detected_objects)
+    # except rospy.ROSInterruptException:
+    #     pass
 
 # function to load parameters and request PickPlace service
 def pr2_mover(object_list):
@@ -198,6 +198,7 @@ if __name__ == '__main__':
     # TODO: Create Publishers
     pcl_objects_pub = rospy.Publisher("/pcl_objects", PointCloud2, queue_size=1)
     detected_objects_pub = rospy.Publisher("/detected_objects", DetectedObjectsArray, queue_size=1)
+    object_markers_pub = rospy.Publisher("/object_markers", Marker, queue_size=1)
     # TODO: Load Model From disk
     model = pickle.load(open('model.sav', 'rb'))
     clf = model['classifier']
