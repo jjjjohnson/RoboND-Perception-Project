@@ -49,31 +49,49 @@ def send_to_yaml(yaml_filename, dict_list):
 # Callback function for your Point Cloud Subscriber
 def pcl_callback(pcl_msg):
 
-# Exercise-2 TODOs:
+	# Exercise-2 TODOs:
 
     # TODO: Convert ROS msg to PCL data
     cloud = ros_to_pcl(pcl_msg)
     # TODO: Statistical Outlier Filtering
     outlier_filter = cloud.make_statistical_outlier_filter()
     outlier_filter.set_mean_k(50)
+
     x = 1
     outlier_filter.set_std_dev_mul_thresh(x)
     cloud_filtered = outlier_filter.filter()
 
+    # filename = 'outlier_filtered.pcd'
+    # pcl.save(cloud_filtered, filename)
     # TODO: Voxel Grid Downsampling
     vox = cloud_filtered.make_voxel_grid_filter()
     LEAF_SIZE = 0.01 
     vox.set_leaf_size(LEAF_SIZE, LEAF_SIZE, LEAF_SIZE)
     cloud_filtered = vox.filter()
 
+    filename = 'outlier_filtered.pcd'
+    pcl.save(cloud_filtered, filename)
+
     # TODO: PassThrough Filter
     passthrough = cloud_filtered.make_passthrough_filter()
     filter_axis = 'z'
     passthrough.set_filter_field_name (filter_axis)
-    axis_min = 0.77 # TODO subject to change
-    axis_max = 1.1 # TODO subject to change
+    axis_min = 0.65 # TODO subject to change
+    axis_max = 0.9 # TODO subject to change
     passthrough.set_filter_limits (axis_min, axis_max)
     cloud_filtered = passthrough.filter()
+    filename = 'pass_through_filtered_z.pcd'
+    pcl.save(cloud_filtered, filename)
+
+    passthrough = cloud_filtered.make_passthrough_filter()
+    filter_axis = 'y'
+    passthrough.set_filter_field_name (filter_axis)
+    axis_min = -0.5 # TODO subject to change
+    axis_max = 0.5 # TODO subject to change
+    passthrough.set_filter_limits (axis_min, axis_max)
+    cloud_filtered = passthrough.filter()
+    filename = 'pass_through_filtered_y.pcd'
+    pcl.save(cloud_filtered, filename)
 
     # TODO: RANSAC Plane Segmentation
     seg = cloud_filtered.make_segmenter()
@@ -85,11 +103,17 @@ def pcl_callback(pcl_msg):
     # TODO: Extract inliers and outliers
     extracted_inliers = cloud_filtered.extract(inliers, negative=False)
     extracted_outliers = cloud_filtered.extract(inliers, negative=True)
+
+    filename = "extracted_outliers.pcd"
+    pcl.save(extracted_outliers, filename)
+    filename = "extracted_inliers.pcd"
+    pcl.save(extracted_inliers, filename)
+
     # TODO: Euclidean Clustering
     white_cloud =  XYZRGB_to_XYZ(extracted_outliers)
     tree = white_cloud.make_kdtree()
     ec = white_cloud.make_EuclideanClusterExtraction()
-    ec.set_ClusterTolerance(0.015)
+    ec.set_ClusterTolerance(0.05) # set to not be too sensentive to color
     ec.set_MinClusterSize(20)
     ec.set_MaxClusterSize(1500)
     ec.set_SearchMethod(tree)
@@ -200,7 +224,7 @@ if __name__ == '__main__':
     detected_objects_pub = rospy.Publisher("/detected_objects", DetectedObjectsArray, queue_size=1)
     object_markers_pub = rospy.Publisher("/object_markers", Marker, queue_size=1)
     # TODO: Load Model From disk
-    model = pickle.load(open('model.sav', 'rb'))
+    model = pickle.load(open('pr2_model.sav', 'rb'))
     clf = model['classifier']
     encoder = LabelEncoder()
     encoder.classes_ = model['classes']
