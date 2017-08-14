@@ -1,5 +1,4 @@
 ## Project: Perception Pick & Place
-### Writeup Template: You can use this file as a template for your writeup if you want to submit it as a markdown file, but feel free to use some other method and submit a pdf if you prefer.
 
 ---
 
@@ -28,41 +27,47 @@
 ### Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
 
 ---
-### Writeup / README
 
-#### 1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  You can submit your writeup as markdown or pdf.  
+#### 1. Complete Exercise 1 steps. 
 
-You're reading it!
+This step involves:
 
-### Exercise 1, 2 and 3 pipeline implemented
-#### 1. Complete Exercise 1 steps. Pipeline for filtering and RANSAC plane fitting implemented.
+- Noise filtering using `cloud.make_statistical_outlier_filter()`.
+<img src="pr2_img/outlier_filtered.png", alt="noisefiltered">
+- Voxel Grid Downsampling.
+- Pass Through Filtering on z and y axis.
+<img src="pr2_img/passthrough_filter_y.png", alt="passthrough y" style="width: 50%;"><img src="pr2_img/passthrough_filter_z.png", alt="passthrough z" style="width: 50%;">
+- Perform RANSAC plane fitting to segment the table in the scene and extract the outliers which is the object on the table.
+<img src="pr2_img/extracted_outlier.png", alt="extracted outliers">
 
-#### 2. Complete Exercise 2 steps: Pipeline including clustering for segmentation implemented.  
+#### 2. Complete Exercise 2 steps: 
 
-#### 2. Complete Exercise 3 Steps.  Features extracted and SVM trained.  Object recognition implemented.
-Here is an example of how to include an image in your writeup.
+This step involves:
 
-![demo-1](https://user-images.githubusercontent.com/20687560/28748231-46b5b912-7467-11e7-8778-3095172b7b19.png)
+- Construct a k-d tree from the cloud_objects point cloud.
+- Clustering Objects using Euclidean Clustering.
 
+#### 3. Complete Exercise 3 Steps.  Features extracted and SVM trained.  Object recognition implemented.
+Generate 50 randomly orienteted object as training data and train the support vector machine on the SVM to classify the trained clusters.
 
+Accuracy: 0.94 (+/- 0.05) 
 
+Accuracy score: 0.94
+<img src="pr2_img/confusion_matrix.png", alt="confusion matrix">
 
-Here's | A | Snappy | Table
---- | --- | --- | ---
-1 | `highlight` | **bold** | 7.41
-2 | a | b | c
-3 | *italic* | text | 403
-4 | 2 | 3 | abcd
+Here is the example of the final clustered and classified objects:
+<img src="pr2_img/objection_recognition.png", alt="object recognition">
 
+### 4. Calculate the center of each detected object and output .yaml files.
 
-### Pick and Place Setup
-
-#### 1. For all three tabletop setups (`test*.world`), perform object recognition, then read in respective pick list (`pick_list_*.yaml`). Next construct the messages that would comprise a valid `PickPlace` request output them to `.yaml` format.
-
-And here's another image! 
-![demo-2](https://user-images.githubusercontent.com/20687560/28748286-9f65680e-7468-11e7-83dc-f1a32380b89c.png)
-
-Spend some time at the end to discuss your code, what techniques you used, what worked and why, where the implementation might fail and how you might improve it if you were going to pursue this project further.  
+- Iterate through the `object_list_param` and `object_list `
+-  Check if the label matches or not
+-  If yes, assign the proper left or right to arm_name 
+-  Store the `yaml_dict` list and save it.
 
 
+### Discussion
+This project integrate a whole process of perception. We need to deal with noise and downsample the dataset, isolate the objece of interest, extract features from each of the object, use machine learning classified to identify each object and label them. Finally we calculate the position of each cluster and decide which arm based on the yaml file.
+
+One thing I would dig deeper is how to achieve the building of the collision map by rotating PR2 in place to capture side tables. Also the path calculatd after `pick_place_routine(test_scene_num, object_name, arm_name, pick_pose, place_pose)` seems too big in z axis that it failed on grabbing the object.
 
